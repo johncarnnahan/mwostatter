@@ -7,6 +7,8 @@ Mechwarrior Online Pilot Data Parser v0.00.0001
 from HTMLParser import HTMLParser
 import requests
 import yaml
+import calendar
+import datetime
 
 EMAIL = ''
 PASSWORD = ''
@@ -19,7 +21,7 @@ class MWOTableParser(HTMLParser):
     '''
     Extend HTMLParser
     '''
-    
+
     def __init__(self):
         '''
         Init
@@ -96,7 +98,7 @@ def parse_type(session, get_str):
     if get_str == 'base':
         get_str = ''
     request = session.get(
-            STATS_URL.format(get_str)
+        STATS_URL.format(get_str)
     )
     parser = MWOTableParser()
     parser.feed(str(request.content))
@@ -117,9 +119,18 @@ def main():
 
     session.post(LOGIN_URL, data=login_data)
     data_dict = {}
+    stats_dict = {}
     get_strs = ['base', 'mech', 'weapon', 'pilot', 'map', 'mode']
     for get_str in get_strs:
-        data_dict.update({get_str: parse_type(session, get_str)})
+        stats_dict.update({get_str: parse_type(session, get_str)})
+    data_dict = {
+                    'timestamp': str(
+                        calendar.timegm(
+                            datetime.datetime.utcnow().timetuple()
+                        )
+                    ),
+                    'stats': stats_dict
+                }
 
     print yaml.dump(data_dict, default_flow_style=False)
 
